@@ -11,5 +11,8 @@
     "url": "git+https://github.com/JaniceK3/fragments.git"
   },
   "author": "REPLACE WITH YOUR NAME",
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "prettier": "3.6.2"
+  }
 }

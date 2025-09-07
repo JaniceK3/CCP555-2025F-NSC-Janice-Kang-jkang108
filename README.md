@@ -50,3 +50,8 @@ npm run debug
 
 - Always run lint before committing
 - Don't use git add .
+- Push local repo to GitHub
+
+```bash
+git push origin main
+```

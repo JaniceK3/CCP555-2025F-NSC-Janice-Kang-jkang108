@@ -35,4 +35,3 @@ npm run debug
 
 - Always run lint before committing
 - Don't use git add .
-- debug.env is for local use- don't commit secrets

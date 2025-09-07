@@ -7,7 +7,10 @@ A Node.js + Express back-end API project with structured logging (Pino), linting
 ### Lint
 
 Check code for problems using ESLint
+
+```bash
 npm run lint
+```
 
 ### Test
 

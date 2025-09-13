@@ -41,7 +41,8 @@ app.get('/', (req, res) => {
     status: 'ok',
     author,
     // TODO: change this to use your GitHub username!
-    githubUrl: 'https://github.com/JaniceK3/fragments',
+    githubUrl:
+      'https://github.com/JaniceK3/https://github.com/JaniceK3/CCP555-2025F-NSC-Janice-Kang-114461239',
     version,
   });
 });

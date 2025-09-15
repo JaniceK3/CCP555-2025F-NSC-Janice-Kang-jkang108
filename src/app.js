@@ -1,5 +1,6 @@
 // src/app.js
 import { signIn, getUser, signOut} from './auth';
+import { getUserFragments } from './api';
 
 async function init() {
   const userSection = document.querySelector('#user');
@@ -22,6 +23,8 @@ async function init() {
   logoutBtn.disabled = false;
   if (logoutBtn.hasAttribute('hidden')) logoutBtn.hidden = false;
 
+  const result = await getUserFragments(user);
+  console.log('User fragments:', result);
 }
 
 addEventListener('DOMContentLoaded', init);

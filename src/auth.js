@@ -44,6 +44,8 @@ export async function signOut() {
   
 
 function formatUser(user) {
+  console.log('User Authenticated', user);
+
   // Minimal profile—add more if you add scopes
   return {
     username: user.profile['cognito:username'],

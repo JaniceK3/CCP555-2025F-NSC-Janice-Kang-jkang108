@@ -1,5 +1,5 @@
 {
-  "name": "ccp555-2025f-nsc-janice-kang-jkang108-lab2",
+  "name": "fragments-ui",
   "private": true,
   "version": "1.0.0",
   "description": "A simple web app using Node.js and Parcel that connects to AWS Cognito for authentication and provides a basic UI to test the Fragments microservice.",
@@ -10,15 +10,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/JaniceK3/CCP555-2025F-NSC-Janice-Kang-jkang108-Lab2.git"
+    "url": "git+https://github.com/JaniceK3/CCP555-2025F-NSC-Janice-Kang-jkang108/tree/main/fragments-ui.git"
   },
   "keywords": [],
   "author": "Janice Kang",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/JaniceK3/CCP555-2025F-NSC-Janice-Kang-jkang108-Lab2/issues"
+    "url": "https://github.com/JaniceK3/CCP555-2025F-NSC-Janice-Kang-jkang108/tree/main/fragments-ui/issues"
   },
-  "homepage": "https://github.com/JaniceK3/CCP555-2025F-NSC-Janice-Kang-jkang108-Lab2#readme",
+  "homepage": "https://github.com/JaniceK3/CCP555-2025F-NSC-Janice-Kang-jkang108/tree/main/fragments-ui#readme",
   "devDependencies": {
     "parcel": "^2.15.4"
   },

@@ -29,7 +29,7 @@ router.get('/', (req, res) => {
     status: 'ok',
     author,
     // Use your own GitHub URL for this!
-    githubUrl: 'https://github.com/REPLACE_WITH_YOUR_GITHUB_USERNAME/fragments',
+    githubUrl: 'https://github.com/JaniceK3/CCP555-2025F-NSC-Janice-Kang-jkang108/tree/main/fragments',
     version,
   });
 });

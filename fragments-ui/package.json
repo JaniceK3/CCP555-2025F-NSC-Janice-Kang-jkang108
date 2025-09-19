@@ -6,7 +6,8 @@
   "scripts": {
     "start": "parcel src/index.html --port 1234",
     "build": "parcel build src/index.html",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint \"./src/**/*.js\""
   },
   "repository": {
     "type": "git",
@@ -20,6 +21,10 @@
   },
   "homepage": "https://github.com/JaniceK3/CCP555-2025F-NSC-Janice-Kang-jkang108/tree/main/fragments-ui#readme",
   "devDependencies": {
+    "@eslint/js": "^9.36.0",
+    "eslint": "^9.36.0",
+    "eslint-plugin-react": "^7.37.5",
+    "globals": "^16.4.0",
     "parcel": "^2.15.4"
   },
   "dependencies": {

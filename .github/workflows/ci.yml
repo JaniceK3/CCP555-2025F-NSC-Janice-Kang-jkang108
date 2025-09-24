@@ -4,13 +4,22 @@ name: ci
 on:
   pull_request:
     branches: [main]
+    paths:
+      - 'fragments/**'
+      - '.github/workflows/**'
   push:
     branches: [main]
+    paths:
+      - 'fragments/**'
+      - '.github/workflows/**'
 
 jobs:
   lint:
     name: ESLint
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: fragments
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -20,6 +29,7 @@ jobs:
         with:
           node-version: 'lts/*'
           cache: 'npm'
+          cache-dependency-path: fragments/package-lock.json
 
       - name: Install node dependencies
         run: npm ci

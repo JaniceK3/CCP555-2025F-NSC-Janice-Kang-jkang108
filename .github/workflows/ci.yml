@@ -37,3 +37,24 @@ jobs:
 
       - name: Run ESLint
         run: npm run lint
+
+        unit-tests:
+          name: Unit Tests
+          runs-on: ubuntu-latest
+          defaults:
+            run:
+              working-directory: fragments
+          steps:
+            - name: Check out code
+              uses: actions/checkout@v4.2.2
+      
+            - name: Setup node
+              uses: actions/setup-node@v4.0.4
+              with:
+                node-version: 'lts/*'
+                cache: 'npm'
+                cache-dependency-path: fragments/package-lock.json
+      
+            - name: Install deps and run tests
+              run: npm install-ci-test
+      

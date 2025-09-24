@@ -22,11 +22,11 @@ jobs:
         working-directory: fragments
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
 
 
       - name: Setup node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v4.0.4
         with:
           node-version: 'lts/*'
           cache: 'npm'

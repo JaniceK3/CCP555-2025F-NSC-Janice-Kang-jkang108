@@ -1,0 +1,39 @@
+# .github/workflows/ci.yml
+name: ci
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'fragments/**'
+      - '.github/workflows/**'
+  push:
+    branches: [main]
+    paths:
+      - 'fragments/**'
+      - '.github/workflows/**'
+
+jobs:
+  lint:
+    name: ESLint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: fragments
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4.2.2
+
+
+      - name: Setup node
+        uses: actions/setup-node@v4.0.4
+        with:
+          node-version: 'lts/*'
+          cache: 'npm'
+          cache-dependency-path: fragments/package-lock.json
+
+      - name: Install node dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint

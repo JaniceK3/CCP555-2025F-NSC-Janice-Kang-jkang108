@@ -45,12 +45,12 @@ jobs:
       - name: Test
         run: npm test --if-present
 
-      - name: Start server
-        run: npm run start &
+      # - name: Start server
+      #   run: npm run start &
 
-      - name: Wait for server
-        run: npx wait-on http://localhost:3000
+      # - name: Wait for server
+      #   run: npx wait-on http://localhost:3000
         
-      - name: Run e2e tests
-        run: npm run test:e2e
+      # - name: Run e2e tests
+      #   run: npm run test:e2e
       

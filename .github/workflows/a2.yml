@@ -1,0 +1,56 @@
+name: A2 CI
+on:
+  push: 
+    paths: 
+        - 'assignments/a2/**'
+  pull_request: 
+    paths: 
+        - 'assignments/a2/**'
+  workflow_dispatch:
+
+permissions: 
+    contents: read
+
+concurrency:
+    group: a2-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    defaults: 
+        run:
+            working-directory: assignments/a2
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: assignments/a2/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint --if-present
+
+      - name: Build
+        run: npm run build --if-present
+
+      - name: Test
+        run: npm test --if-present
+
+      - name: Start server
+        run: npm run start &
+
+      - name: Wait for server
+        run: npx wait-on http://localhost:3000
+        
+      - name: Run e2e tests
+        run: npm run test:e2e
+      

@@ -1,6 +1,6 @@
 # Fragments API Deployment Guide
 
-## 2. Launch + prepare EC2
+## 1. Launch + prepare EC2
 
 1. Launch an EC2 instance (t3.micro is enough for the assignment) with Amazon Linux 2023.
 2. Open the security group to allow inbound HTTP traffic to `PORT` (typically TCP 8080).
@@ -16,7 +16,7 @@
 
 ---
 
-## 3. Copy the project
+## 2. Copy the project
 
 There are two easy options:
 
@@ -43,31 +43,17 @@ npm test
 
 ---
 
-## 4. Configure runtime env
+## 3. Configure runtime env
 
 Create a `.env` file (same directory as `package.json`) with production values:
-
-```bash
-cat <<'EOF' > .env
-PORT=8080
-LOG_LEVEL=info
-AWS_COGNITO_POOL_ID=us-east-1_XXXXXX
-AWS_COGNITO_CLIENT_ID=XXXXXXXXXXXX
-# AWS_COGNITO_CLIENT_SECRET=optional
-AWS_COGNITO_DOMAIN=https://your-domain.auth.us-east-1.amazoncognito.com
-OAUTH_SIGN_IN_REDIRECT_URL=https://your-ui-app/callback
-# API_URL is used when generating Location headers; include the public base URL of this API.
-API_URL=https://your-ec2-public-dns:8080
-EOF
-```
 
 Because `src/index.js` calls `require('dotenv').config()`, these values are loaded automatically when the server starts.
 
 ---
 
-## 5. Start the server
+## 4. Start the server
 
-### 5.1 Simple foreground start
+### 4.1 Simple foreground start
 
 ```bash
 npm start
@@ -75,7 +61,7 @@ npm start
 
 Keep the terminal open; `CTRL+C` stops the server. Useful while debugging.
 
-### 5.2 Background with `pm2` (recommended)
+### 4.2 Background with `pm2` (recommended)
 
 ```bash
 pm2 start src/index.js --name fragments --env production
@@ -85,7 +71,7 @@ pm2 startup systemd  # prints a command; run it once to register on boot
 
 `pm2 logs fragments` tails the logs; `pm2 restart fragments` restarts after deploying updates.
 
-### 5.3 systemd service (alternative)
+### 4.3 systemd service (alternative)
 
 Create `/etc/systemd/system/fragments.service` (requires sudo):
 
@@ -116,7 +102,7 @@ sudo systemctl status fragments
 
 ---
 
-## 6. Smoke test
+## 5. Smoke test
 
 From your laptop:
 
@@ -129,7 +115,7 @@ You should see the JSON health response and an authenticated fragments payload. 
 
 ---
 
-## 7. Deploying updates
+## 6. Deploying updates
 
 1. Pull the latest code (`git pull` or copy new build).
 2. Run `npm ci`, `npm run lint`, `npm test`.

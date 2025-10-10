@@ -1,58 +1,86 @@
 name: A1 CI
+
 on:
-  push: 
-    paths: 
-        - 'assignments/a1/**'
-  pull_request: 
-    paths: 
-        - 'assignments/a1/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'fragments/**'
+      - 'fragments-ui/**'
+      - '.github/workflows/**'
+  push:
+    branches: [main]
+    paths:
+      - 'fragments/**'
+      - 'fragments-ui/**'
+      - '.github/workflows/**'
   workflow_dispatch:
 
-permissions: 
-    contents: read
-
-concurrency:
-    group: a1-${{ github.ref }}
-    cancel-in-progress: true
-
 jobs:
-  ci:
+  lint:
+    name: ESLint
     runs-on: ubuntu-latest
-    defaults: 
-        run:
-            working-directory: assignments/a1
-
+    defaults:
+      run:
+        working-directory: fragments
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Check out code
+        uses: actions/checkout@v4.2.2
 
-      - name: Use Node
-        uses: actions/setup-node@v4
+      - name: Setup node
+        uses: actions/setup-node@v4.0.4
         with:
-          node-version: '20'
+          node-version: 'lts/*'
           cache: 'npm'
-          cache-dependency-path: assignments/a1/package-lock.json
+          cache-dependency-path: fragments/package-lock.json
 
-      - name: Install
+      - name: Install node dependencies
         run: npm ci
 
-      - name: Lint
-        run: npm run lint --if-present
+      - name: Run ESLint
+        run: npm run lint
 
-      - name: Build
-        run: npm run build --if-present
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: fragments
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4.2.2
 
-      - name: Test
-        run: npm test --if-present
+      - name: Setup node
+        uses: actions/setup-node@v4.0.4
+        with:
+          node-version: 'lts/*'
+          cache: 'npm'
+          cache-dependency-path: fragments/package-lock.json
 
-      # - name: Start server
-      #   run: npm run start &
+      - name: Install deps and run tests
+        run: npm install-ci-test
 
-      # - name: Wait for server
-      #   run: npx wait-on http://localhost:3000
-        
-      # - name: Run e2e tests
-      #   run: npm run test:e2e
-      
+  ui:
+    name: Fragments UI
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: fragments-ui
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4.2.2
 
+      - name: Setup node
+        uses: actions/setup-node@v4.0.4
+        with:
+          node-version: 'lts/*'
+          cache: 'npm'
+          cache-dependency-path: fragments-ui/package-lock.json
 
+      - name: Install node dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Build UI
+        run: npm run build

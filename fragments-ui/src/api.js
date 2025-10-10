@@ -1,30 +1,53 @@
 // src/api.js
  
 // fragments microservice API to use, defaults to localhost:8080 if not set in env
-const apiUrl = process.env.API_URL || 'http://localhost:8080';
- 
-/**
- * Given an authenticated user, request all fragments for this user from the
- * fragments microservice (currently only running locally). We expect a user
- * to have an `idToken` attached, so we can send that along with the request.
- */
-export async function getUserFragments(user) {
-  console.log('Requesting user fragments data...');
-  try {
-    const fragmentsUrl = new URL('/v1/fragments', apiUrl);
-    const res = await fetch(fragmentsUrl, {
-      // Generate headers with the proper Authorization bearer token to pass.
-      // We are using the `authorizationHeaders()` helper method we defined
-      // earlier, to automatically attach the user's ID token.
-      headers: user.authorizationHeaders(),
-    });
-    if (!res.ok) {
-      throw new Error(`${res.status} ${res.statusText}`);
-    }
-    const data = await res.json();
-    console.log('Successfully got user fragments data', { data });
-    return data;
-  } catch (err) {
-    console.error('Unable to call GET /v1/fragments', { err });
+const fallback =
+  (typeof window !== 'undefined' && window.location && window.location.origin) ||
+  'http://localhost:8080';
+const apiUrl = (process.env.API_URL || fallback).replace(/\/+$/, '');
+
+export const getApiBaseUrl = () => apiUrl;
+
+const handleJsonResponse = async (res) => {
+  const payload = await res.json().catch(() => null);
+  if (!res.ok) {
+    const message = payload?.error?.message || `${res.status} ${res.statusText}`;
+    const error = new Error(message);
+    error.status = res.status;
+    error.payload = payload;
+    throw error;
   }
+  return { payload, res };
+};
+
+/**
+ * Request all fragments for the authenticated user.
+ */
+export async function getUserFragments(user, { expand = true } = {}) {
+  const search = expand ? '?expand=1' : '';
+  const fragmentsUrl = new URL(`/v1/fragments${search}`, apiUrl);
+  const { payload } = await handleJsonResponse(
+    await fetch(fragmentsUrl, {
+      headers: user.authorizationHeaders(),
+    })
+  );
+  return payload;
+}
+
+/**
+ * Create a new plain-text fragment for the authenticated user.
+ */
+export async function createFragment(user, content) {
+  const fragmentsUrl = new URL('/v1/fragments', apiUrl);
+  const response = await fetch(fragmentsUrl, {
+    method: 'POST',
+    headers: user.authorizationHeaders('text/plain'),
+    body: content,
+  });
+
+  const { payload, res } = await handleJsonResponse(response);
+  return {
+    fragment: payload.fragment,
+    location: res.headers.get('Location'),
+  };
 }

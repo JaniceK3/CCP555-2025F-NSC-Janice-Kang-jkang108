@@ -6,11 +6,13 @@ on:
     branches: [main]
     paths:
       - 'fragments/**'
+      - 'fragments-ui/**'
       - '.github/workflows/**'
   push:
     branches: [main]
     paths:
       - 'fragments/**'
+      - 'fragments-ui/**'
       - '.github/workflows/**'
 
 jobs:
@@ -57,4 +59,29 @@ jobs:
 
       - name: Install deps and run tests
         run: npm install-ci-test
+  ui:
+    name: Fragments UI
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: fragments-ui
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4.2.2
+
+      - name: Setup node
+        uses: actions/setup-node@v4.0.4
+        with:
+          node-version: 'lts/*'
+          cache: 'npm'
+          cache-dependency-path: fragments-ui/package-lock.json
+
+      - name: Install node dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Build UI
+        run: npm run build
       

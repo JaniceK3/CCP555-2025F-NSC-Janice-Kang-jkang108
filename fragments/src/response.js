@@ -1,4 +1,5 @@
 // fragments/src/response.js
+
 module.exports.createSuccessResponse = function (data) {
     return { status: 'ok', ...(data || {}) };
   };

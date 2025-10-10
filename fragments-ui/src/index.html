@@ -14,8 +14,32 @@
         <button id="logout" hidden>Logout</button>
       </nav>
     </section>
+    <section id="config">
+      <p>API Server: <code id="api-base">loading…</code></p>
+    </section>
     <section hidden id="user">
       <h2>Hello <span class="username"></span>!</h2>
+    </section>
+    <section hidden id="controls">
+      <h2>Create a Text Fragment</h2>
+      <form id="fragment-form">
+        <label for="fragment-content">Fragment content</label>
+        <textarea
+          id="fragment-content"
+          name="fragment-content"
+          rows="6"
+          placeholder="Type some text and submit to create a fragment"
+          required
+        ></textarea>
+        <div>
+          <button id="create-fragment" type="submit">Create Fragment</button>
+        </div>
+      </form>
+      <div id="feedback" role="status" aria-live="polite"></div>
+    </section>
+    <section hidden id="fragments-section">
+      <h2>Your Fragments</h2>
+      <ul id="fragments-list"></ul>
     </section>
   </body>
 </html>

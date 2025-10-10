@@ -1,15 +1,15 @@
 // src/routes/api/index.js
  
-/**
- * The main entry-point for the v1 version of the fragments API.
- */
+//The main entry-point for the v1 version of the fragments API.
 const express = require('express');
  
 // Create a router on which to mount our API endpoints
 const router = express.Router();
- 
-// Define our first route, which will be: GET /v1/fragments
+
+const rawBody = require('./raw-body');
+
 router.get('/fragments', require('./get'));
-// Other routes (POST, DELETE, etc.) will go here later on...
- 
+router.post('/fragments', rawBody(), require('./post'));
+router.get('/fragments/:id', require('./get-by-id'));
+
 module.exports = router;

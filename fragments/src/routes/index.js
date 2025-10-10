@@ -18,7 +18,7 @@ const { createSuccessResponse } = require('../response');
  * Expose all of our API routes on /v1/* to include an API version.
  */
 router.use(`/v1`, authenticate(), require('./api'));
- 
+
 /**
  * Define a simple health check route. If the server is running
  * we'll respond with a 200 OK.  If not, the server isn't healthy.
@@ -34,5 +34,12 @@ router.get('/', (req, res) => {
     version,
   }));
 });
- 
+
+// Test-only route to exercise error handling in automated tests
+if (process.env.NODE_ENV === 'test') {
+  router.get('/__test__/error', () => {
+    throw new Error('boom');
+  });
+}
+
 module.exports = router;

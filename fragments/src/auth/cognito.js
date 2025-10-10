@@ -1,8 +1,8 @@
-// src/auth.js
-const passport = require('passport');
+// src/cognito.js
 const BearerStrategy = require('passport-http-bearer').Strategy;
 const { CognitoJwtVerifier } = require('aws-jwt-verify');
 const logger = require('../logger');
+const { authorize } = require('./auth-middleware');
 
 const jwtVerifier = CognitoJwtVerifier.create({
   userPoolId: process.env.AWS_COGNITO_POOL_ID,
@@ -22,12 +22,11 @@ module.exports.strategy = () =>
     try {
       const user = await jwtVerifier.verify(token);
       logger.debug({ user }, 'verified user token');
-      // You can attach any identifier; we’ll use email if present
-      done(null, user.email || user['cognito:username'] || user.sub);
+      done(null, user);
     } catch (err) {
       logger.error({ err }, 'could not verify token');
       done(null, false);
     }
   });
 
-module.exports.authenticate = () => passport.authenticate('bearer', { session: false });
+module.exports.authenticate = () => authorize('bearer');

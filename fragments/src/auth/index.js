@@ -1,3 +1,4 @@
+// fragments/src/auth/index.js
 if (
     process.env.AWS_COGNITO_POOL_ID &&
     process.env.AWS_COGNITO_CLIENT_ID &&

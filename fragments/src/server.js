@@ -16,7 +16,7 @@ const port = parseInt(process.env.PORT || '8080', 10);
 
 if (process.env.LOG_LEVEL === 'debug') {
   // Dev-only dump of all environment variables
-  console.log('process.env (debug mode) →', process.env);
+  logger.debug({ env: process.env }, 'process.env (debug mode)');
 }
 
 // Start a server listening on this port

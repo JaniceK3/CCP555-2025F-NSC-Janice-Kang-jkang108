@@ -8,7 +8,8 @@ const router = express.Router();
 router.get('/fragments', async (req, res, next) => {
   try {
     const expand = req.query.expand === '1' || req.query.expand === 'true';
-    const fragments = await Fragment.byUser(req.user, expand);
+    const ownerId = req.user?.ownerId || req.ownerId;
+    const fragments = await Fragment.byUser(ownerId, expand);
     res.status(200).json(createSuccessResponse({ fragments }));
   } catch (err) {
     next(err);

@@ -3,9 +3,15 @@
 const crypto = require('crypto');
 const data = require('./data');
 
-const SUPPORTED_TYPES = ['text/plain'];
+const SUPPORTED_TYPES = ['application/json'];
 
-const isSupportedType = (value) => SUPPORTED_TYPES.includes(value.toLowerCase());
+const isSupportedType = (value) => {
+  if (!value) {
+    return false;
+  }
+  const type = value.toLowerCase();
+  return type.startsWith('text/') || SUPPORTED_TYPES.includes(type);
+};
 
 const now = () => new Date().toISOString();
 

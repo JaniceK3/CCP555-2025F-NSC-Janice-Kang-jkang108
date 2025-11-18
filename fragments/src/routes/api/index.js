@@ -10,6 +10,8 @@ const rawBody = require('./raw-body');
 
 router.get('/fragments', require('./get'));
 router.post('/fragments', rawBody(), require('./post'));
+router.get('/fragments/:id/info', require('./get-info'));
+router.get('/fragments/:id.:ext', require('./get-by-id-ext'));
 router.get('/fragments/:id', require('./get-by-id'));
 
 module.exports = router;

@@ -13,13 +13,14 @@ describe('Fragment model', () => {
   });
 
   describe('isSupportedType()', () => {
-    test('accepts text/plain regardless of case', () => {
-      expect(Fragment.isSupportedType('text/plain')).toBe(true);
-      expect(Fragment.isSupportedType('TEXT/PLAIN')).toBe(true);
+    test('accepts any text/* type and application/json regardless of case', () => {
+      ['text/plain', 'TEXT/MARKDOWN', 'text/html', 'APPLICATION/JSON'].forEach((type) => {
+        expect(Fragment.isSupportedType(type)).toBe(true);
+      });
     });
 
     test('rejects unsupported media types', () => {
-      ['text/html', 'application/json', 'application/octet-stream'].forEach((type) => {
+      ['image/png', 'application/xml', 'application/octet-stream'].forEach((type) => {
         expect(Fragment.isSupportedType(type)).toBe(false);
       });
     });
@@ -32,7 +33,7 @@ describe('Fragment model', () => {
 
     test('type is required and must be supported', () => {
       expect(() => new Fragment({ ownerId })).toThrow(/type/);
-      expect(() => new Fragment({ ownerId, type: 'text/html' })).toThrow(/supported/);
+      expect(() => new Fragment({ ownerId, type: 'application/xml' })).toThrow(/supported/);
     });
 
     test('generates a uuid if id not provided', () => {

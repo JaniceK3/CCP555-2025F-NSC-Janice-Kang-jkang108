@@ -127,3 +127,64 @@ Keep the `.env` file out of version control to avoid leaking secrets—SCP it to
 ---
 
 With the API running on EC2, point the fragments UI’s `API_URL` at the public DNS (or an HTTPS reverse proxy) so the web app talks to your deployed backend. That completes the deployment portion of Assignment 1.
+
+---
+
+## 7. Deploy the published Docker image (preferred for EC2)
+
+GitHub Actions (`.github/workflows/ci.yml`) builds and pushes the `janicek3/fragments` image to Docker Hub on every commit to `main`. The repository is public: https://hub.docker.com/r/janicek3/fragments. You can confirm availability directly on EC2 by running `docker pull janicek3/fragments:latest`.
+
+### 7.1 Install Docker on Amazon Linux 2023
+
+```bash
+sudo dnf install -y docker
+sudo systemctl enable --now docker
+sudo usermod -aG docker ec2-user
+exit  # log back in so group membership refreshes
+```
+
+### 7.2 Prepare runtime secrets
+
+Create an environment file (e.g., `fragments.env`) in your home directory. Include the same variables the Node server expects (Cognito, Basic Auth, API URL, etc.). Example:
+
+```
+NODE_ENV=production
+PORT=8080
+API_URL=https://<your-domain>
+BASIC_AUTH_FILE=/app/tests/.htpasswd
+# ...other secrets...
+```
+
+Copy your `.htpasswd` file alongside `fragments.env` so Docker can mount or read it later if you override credentials.
+
+### 7.3 Run the published container
+
+```bash
+docker pull janicek3/fragments:latest
+docker run -d \
+  --name fragments \
+  --env-file ~/fragments.env \
+  -p 8080:8080 \
+  janicek3/fragments:latest
+```
+
+The container image already includes the bundled `tests/.htpasswd` file and defaults to the non-root `app` user. Check logs with `docker logs -f fragments`.
+
+### 7.4 Updating to new builds
+
+Each push to `main` produces three tags: `latest`, `main`, and a commit-specific `sha-<git-sha>` (see the `docker-hub` job in the CI workflow). To upgrade:
+
+```bash
+docker pull janicek3/fragments:latest
+docker stop fragments && docker rm fragments
+docker run -d --name fragments --env-file ~/fragments.env -p 8080:8080 janicek3/fragments:latest
+```
+
+Reuse the SHA tag if you want deterministic rollbacks:
+
+```bash
+docker pull janicek3/fragments:sha-<commit>
+docker run -d --name fragments --env-file ~/fragments.env -p 8080:8080 janicek3/fragments:sha-<commit>
+```
+
+Smoke test the deployed container exactly as before (`curl -i http://<dns>:8080/` etc.). This workflow ensures EC2 never builds images locally—you always pull the tested artifact from Docker Hub.

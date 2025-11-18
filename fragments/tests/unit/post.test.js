@@ -17,8 +17,8 @@ describe('POST /v1/fragments', () => {
     request(app)
       .post('/v1/fragments')
       .auth('user1@email.com', 'password1')
-      .set('Content-Type', 'application/json')
-      .send(JSON.stringify({ foo: 'bar' }))
+      .set('Content-Type', 'image/png')
+      .send('not supported')
       .expect(415));
 
   test('creates fragment metadata and returns location header', async () => {
@@ -38,6 +38,34 @@ describe('POST /v1/fragments', () => {
     });
     const fragmentId = res.body.fragment.id;
     expect(res.headers.location.endsWith(`/v1/fragments/${fragmentId}`)).toBe(true);
+  });
+
+  test('accepts application/json fragments', async () => {
+    const body = { foo: 'bar' };
+
+    const res = await request(app)
+      .post('/v1/fragments')
+      .auth('user1@email.com', 'password1')
+      .set('Content-Type', 'application/json')
+      .send(JSON.stringify(body));
+
+    expect(res.statusCode).toBe(201);
+    expect(res.body.fragment.type).toBe('application/json');
+    expect(res.body.fragment.size).toBe(JSON.stringify(body).length);
+  });
+
+  test('accepts arbitrary text/* fragments such as markdown', async () => {
+    const markdown = '# Title\n\nSome body.';
+
+    const res = await request(app)
+      .post('/v1/fragments')
+      .auth('user1@email.com', 'password1')
+      .set('Content-Type', 'text/markdown')
+      .send(markdown);
+
+    expect(res.statusCode).toBe(201);
+    expect(res.body.fragment.type).toBe('text/markdown');
+    expect(res.body.fragment.size).toBe(markdown.length);
   });
 
   test('unexpected errors bubble to the error handler', async () => {
@@ -82,6 +110,51 @@ describe('POST /v1/fragments', () => {
 
     expect(res.statusCode).toBe(500);
     expect(res.body.error.message).toBe('boom');
+    jest.resetModules();
+  });
+
+  test('errors mentioning unsupported types return 415', async () => {
+    let testApp;
+    jest.isolateModules(() => {
+      jest.doMock('../../src/model/fragment', () => {
+        return class Fragment {
+          constructor() {
+            this.id = 'mock-id';
+            this.ownerId = 'mock-owner';
+            this.type = 'text/plain';
+          }
+
+          static isSupportedType() {
+            return true;
+          }
+
+          async setData() {
+            throw new Error('type not supported');
+          }
+
+          toObject() {
+            return {
+              id: this.id,
+              ownerId: this.ownerId,
+              type: this.type,
+              size: 0,
+              created: new Date().toISOString(),
+              updated: new Date().toISOString(),
+            };
+          }
+        };
+      });
+      testApp = require('../../src/app');
+    });
+
+    const res = await request(testApp)
+      .post('/v1/fragments')
+      .auth('user1@email.com', 'password1')
+      .set('Content-Type', 'text/plain')
+      .send('data');
+
+    expect(res.statusCode).toBe(415);
+    expect(res.body.error.message).toBe('type not supported');
     jest.resetModules();
   });
 });

@@ -70,4 +70,28 @@ describe('in-memory data store', () => {
     expect(await data.readFragment(fragment.ownerId, fragment.id)).toEqual(fragment);
     expect(await data.readFragmentData(fragment.ownerId, fragment.id)).toBeUndefined();
   });
+
+  test('readFragment returns undefined when owner is missing', async () => {
+    expect(await data.readFragment('missing-owner', 'id')).toBeUndefined();
+  });
+
+  test('listFragments returns empty array when owner missing', async () => {
+    expect(await data.listFragments('missing-owner')).toEqual([]);
+  });
+
+  test('deleteFragment safely ignores unknown owners', async () => {
+    await expect(data.deleteFragment('missing-owner', 'id')).resolves.toBeUndefined();
+  });
+
+  test('deleteFragmentData safely ignores unknown owners', async () => {
+    await expect(data.deleteFragmentData('missing-owner', 'id')).resolves.toBeUndefined();
+  });
+
+  test('readFragmentData returns undefined when no data exists', async () => {
+    expect(await data.readFragmentData('missing-owner', 'id')).toBeUndefined();
+  });
+
+  test('writeFragmentData enforces Buffer input', async () => {
+    await expect(data.writeFragmentData('owner', 'id', 'not buffer')).rejects.toThrow(/Buffer/);
+  });
 });

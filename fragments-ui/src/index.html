@@ -21,8 +21,14 @@
       <h2>Hello <span class="username"></span>!</h2>
     </section>
     <section hidden id="controls">
-      <h2>Create a Text Fragment</h2>
+      <h2>Create a Fragment</h2>
       <form id="fragment-form">
+        <label for="fragment-type">Content type</label>
+        <select id="fragment-type" name="fragment-type">
+          <option value="text/plain">text/plain (default)</option>
+          <option value="text/markdown">text/markdown</option>
+          <option value="application/json">application/json</option>
+        </select>
         <label for="fragment-content">Fragment content</label>
         <textarea
           id="fragment-content"
@@ -36,6 +42,7 @@
         </div>
       </form>
       <div id="feedback" role="status" aria-live="polite"></div>
+      <p id="location-info" hidden></p>
     </section>
     <section hidden id="fragments-section">
       <h2>Your Fragments</h2>

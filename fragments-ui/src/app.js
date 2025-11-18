@@ -13,7 +13,9 @@ const mapSelectors = () => {
   selectors.fragmentsList = document.querySelector('#fragments-list');
   selectors.form = document.querySelector('#fragment-form');
   selectors.contentField = document.querySelector('#fragment-content');
+  selectors.typeField = document.querySelector('#fragment-type');
   selectors.feedback = document.querySelector('#feedback');
+  selectors.locationInfo = document.querySelector('#location-info');
   selectors.apiBase = document.querySelector('#api-base');
 };
 
@@ -64,8 +66,26 @@ const toggleAuthenticatedUI = (isAuthenticated) => {
   if (!isAuthenticated) {
     if (selectors.fragmentsList) selectors.fragmentsList.innerHTML = '';
     if (selectors.contentField) selectors.contentField.value = '';
+    updateLocationInfo('');
     setFeedback('');
   }
+};
+
+const updateLocationInfo = (location) => {
+  if (!selectors.locationInfo) return;
+  if (!location) {
+    selectors.locationInfo.hidden = true;
+    selectors.locationInfo.innerHTML = '';
+    return;
+  }
+  selectors.locationInfo.hidden = false;
+  const link = document.createElement('a');
+  link.href = location;
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  link.textContent = location;
+  selectors.locationInfo.innerHTML = 'Last fragment Location: ';
+  selectors.locationInfo.appendChild(link);
 };
 
 async function init() {
@@ -77,6 +97,17 @@ async function init() {
 
   selectors.loginBtn?.addEventListener('click', () => signIn());
   selectors.logoutBtn?.addEventListener('click', () => signOut());
+  selectors.typeField?.addEventListener('change', (event) => {
+    if (!selectors.contentField) return;
+    const type = event.target.value;
+    if (type === 'application/json') {
+      selectors.contentField.placeholder = 'Enter valid JSON (e.g., {"hello":"world"})';
+    } else if (type === 'text/markdown') {
+      selectors.contentField.placeholder = 'Enter Markdown (e.g., # Title)';
+    } else {
+      selectors.contentField.placeholder = 'Type some text and submit to create a fragment';
+    }
+  });
 
   const user = await getUser();
   if (!user) {
@@ -104,15 +135,28 @@ async function init() {
       return;
     }
 
+    const typeField = selectors.typeField;
+    const type = typeField?.value || 'text/plain';
+    let payload = content;
+    if (type === 'application/json') {
+      try {
+        payload = JSON.stringify(JSON.parse(content));
+      } catch (error) {
+        setFeedback(`Invalid JSON: ${error.message}`, 'error');
+        return;
+      }
+    }
+
     const submitBtn = selectors.form.querySelector('button[type="submit"]');
     if (submitBtn) submitBtn.disabled = true;
     setFeedback('Creating fragment…', 'info');
     try {
-      const { fragment, location } = await createFragment(user, content);
+      const { fragment, location } = await createFragment(user, payload, type);
       setFeedback(
         `Fragment ${fragment.id} created! ${location ? `Location: ${location}` : ''}`,
         'success'
       );
+      updateLocationInfo(location);
       contentField.value = '';
       const { fragments } = await getUserFragments(user);
       renderFragments(fragments, getApiBaseUrl());

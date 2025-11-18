@@ -1,18 +1,18 @@
-# Dockerfile for the Fragments microservice (Lab 5)
-# Builds a runnable image of our Node.js service.
-# See: https://docs.docker.com/engine/reference/builder/
+FROM node:20-alpine AS deps
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
 
-# Base image (pin a version to match your local Node)
-FROM node:20.19.5
+FROM deps AS test
+COPY . .
+RUN npm run lint && npm test
+RUN npm prune --omit=dev
 
-# Smaller base, good defaults
-FROM node:20-alpine
+FROM node:20-alpine AS production
 
-# Metadata
 LABEL maintainer="Janice Kang <jkanggj0330@gmail.com>"
 LABEL description="Fragments node.js microservice"
 
-# App env (non-secrets)
 ENV NODE_ENV=production \
     PORT=8080 \
     NPM_CONFIG_LOGLEVEL=warn \
@@ -20,20 +20,14 @@ ENV NODE_ENV=production \
 
 WORKDIR /app
 
-# Install only production dependencies using the lockfile
-COPY package*.json ./
-# If you have a package-lock.json, npm ci is fastest & reproducible
-RUN npm ci --omit=dev
+COPY --from=test /app/package*.json ./
+COPY --from=test /app/node_modules ./node_modules
+COPY --from=test /app/src ./src
+COPY --from=test /app/tests/.htpasswd ./tests/.htpasswd
 
-# Copy source and the htpasswd file (only that file, not the whole tests dir)
-COPY ./src ./src
-COPY ./tests/.htpasswd ./tests/.htpasswd
-
-# Drop root for security
 RUN addgroup -S app && adduser -S app -G app && chown -R app:app /app
 USER app
 
 EXPOSE 8080
 CMD ["npm","start"]
-
 

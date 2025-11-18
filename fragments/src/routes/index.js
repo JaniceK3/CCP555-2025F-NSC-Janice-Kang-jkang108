@@ -40,6 +40,12 @@ if (process.env.NODE_ENV === 'test') {
   router.get('/__test__/error', () => {
     throw new Error('boom');
   });
+
+  router.get('/__test__/client-error', (req, res, next) => {
+    const err = new Error('client oops');
+    err.status = 418;
+    next(err);
+  });
 }
 
 module.exports = router;

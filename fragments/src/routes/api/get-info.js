@@ -1,23 +1,18 @@
-// fragments/src/routes/api/get-by-id.js
+// fragments/src/routes/api/get-info.js
 
 const Fragment = require('../../model/fragment');
-const { createErrorResponse } = require('../../response');
+const { createSuccessResponse, createErrorResponse } = require('../../response');
 
 module.exports = async (req, res, next) => {
   try {
     const ownerId = req.user?.ownerId || req.ownerId;
     const fragment = await Fragment.byId(ownerId, req.params.id);
+
     if (!fragment) {
       return res.status(404).json(createErrorResponse(404, 'fragment not found'));
     }
 
-    const data = await fragment.getData();
-    if (!data) {
-      return res.status(404).json(createErrorResponse(404, 'fragment data not found'));
-    }
-
-    res.setHeader('Content-Type', fragment.type);
-    return res.status(200).send(data);
+    return res.status(200).json(createSuccessResponse({ fragment: fragment.toObject() }));
   } catch (err) {
     return next(err);
   }

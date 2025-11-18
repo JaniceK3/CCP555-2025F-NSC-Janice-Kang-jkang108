@@ -37,11 +37,11 @@ export async function getUserFragments(user, { expand = true } = {}) {
 /**
  * Create a new plain-text fragment for the authenticated user.
  */
-export async function createFragment(user, content) {
+export async function createFragment(user, content, type = 'text/plain') {
   const fragmentsUrl = new URL('/v1/fragments', apiUrl);
   const response = await fetch(fragmentsUrl, {
     method: 'POST',
-    headers: user.authorizationHeaders('text/plain'),
+    headers: user.authorizationHeaders(type),
     body: content,
   });
 

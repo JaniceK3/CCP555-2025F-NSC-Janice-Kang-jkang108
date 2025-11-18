@@ -19,4 +19,13 @@ describe('404 handler', () => {
       error: { code: 500, message: 'boom' },
     });
   });
+
+  test('client error through error handler returns provided status', async () => {
+    const res = await request(app).get('/__test__/client-error');
+    expect(res.statusCode).toBe(418);
+    expect(res.body).toEqual({
+      status: 'error',
+      error: { code: 418, message: 'client oops' },
+    });
+  });
 });

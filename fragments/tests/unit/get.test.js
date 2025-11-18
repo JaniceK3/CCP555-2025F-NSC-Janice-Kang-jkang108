@@ -54,4 +54,17 @@ describe('GET /v1/fragments', () => {
       size: 'hello world'.length,
     });
   });
+
+  test('expand=true also returns metadata', async () => {
+    const owner = hash('user1@email.com');
+    const fragment = new Fragment({ ownerId: owner, type: 'text/plain' });
+    await fragment.setData(Buffer.from('hello world'));
+
+    const res = await request(app)
+      .get('/v1/fragments?expand=true')
+      .auth('user1@email.com', 'password1');
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.fragments[0]).toMatchObject({ id: fragment.id, ownerId: owner });
+  });
 });

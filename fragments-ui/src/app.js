@@ -3,6 +3,7 @@ import { signIn, getUser, signOut } from './auth';
 import { createFragment, getApiBaseUrl, getUserFragments } from './api';
 
 const selectors = {};
+let currentUser = null;
 
 const mapSelectors = () => {
   selectors.userSection = document.querySelector('#user');
@@ -48,8 +49,26 @@ const renderFragments = (fragments, apiBaseUrl) => {
       fragment.updated
     ).toLocaleString()}`;
 
+    const actions = document.createElement('div');
+    actions.className = 'fragment-actions';
+
+    const viewBtn = document.createElement('button');
+    viewBtn.type = 'button';
+    viewBtn.textContent = 'View';
+    viewBtn.addEventListener('click', () => openFragment(fragment.id));
+    actions.appendChild(viewBtn);
+
+    if (fragment.type === 'text/markdown') {
+      const htmlBtn = document.createElement('button');
+      htmlBtn.type = 'button';
+      htmlBtn.textContent = 'View HTML';
+      htmlBtn.addEventListener('click', () => openFragment(fragment.id, 'html'));
+      actions.appendChild(htmlBtn);
+    }
+
     item.appendChild(link);
     item.appendChild(meta);
+    item.appendChild(actions);
     selectors.fragmentsList.appendChild(item);
   });
 };
@@ -88,6 +107,36 @@ const updateLocationInfo = (location) => {
   selectors.locationInfo.appendChild(link);
 };
 
+const openFragment = async (fragmentId, extension = '') => {
+  if (!currentUser) {
+    setFeedback('Unable to view fragment: not authenticated', 'error');
+    return;
+  }
+
+  try {
+    const suffix = extension ? `.${extension}` : '';
+    const targetUrl = new URL(`/v1/fragments/${fragmentId}${suffix}`, getApiBaseUrl());
+    const response = await fetch(targetUrl, {
+      headers: currentUser.authorizationHeaders(extension === 'html' ? 'text/html' : undefined),
+    });
+
+    if (!response.ok) {
+      throw new Error(`${response.status} ${response.statusText}`);
+    }
+
+    const body = await response.text();
+    const viewer = window.open('', '_blank');
+    if (extension === 'html') {
+      viewer.document.write(body);
+    } else {
+      viewer.document.write(`<pre style="white-space: pre-wrap">${body}</pre>`);
+    }
+    viewer.document.close();
+  } catch (error) {
+    setFeedback(`Unable to load fragment: ${error.message}`, 'error');
+  }
+};
+
 async function init() {
   mapSelectors();
 
@@ -114,6 +163,7 @@ async function init() {
     toggleAuthenticatedUI(false);
     return;
   }
+  currentUser = user;
 
   const usernameEl = selectors.userSection?.querySelector('.username');
   if (usernameEl) {

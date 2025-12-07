@@ -12,6 +12,11 @@ services:
       AWS_DYNAMODB_ENDPOINT_URL: http://dynamodb-local:8000
       AWS_S3_BUCKET_NAME: fragments
       AWS_DYNAMODB_TABLE_NAME: fragments
+
+      # LocalStack test credentials (match what local-aws-setup.sh uses)
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_SESSION_TOKEN: test
     ports:
       - "8080:8080"
   dynamodb-local:

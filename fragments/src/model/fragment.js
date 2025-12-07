@@ -1,7 +1,14 @@
 // fragments/src/model/fragment.js
 
 const crypto = require('crypto');
-const data = require('./data');
+const {
+  writeFragment,
+  readFragment,
+  listFragments,
+  writeFragmentData,
+  readFragmentData,
+  deleteFragment,
+} = require('./data');
 
 const SUPPORTED_TYPES = ['application/json'];
 
@@ -37,7 +44,7 @@ class Fragment {
   }
 
   static async byUser(ownerId, expand = false) {
-    const fragments = await data.listFragments(ownerId);
+    const fragments = await listFragments(ownerId);
     if (expand) {
       return fragments.map((fragment) => new Fragment(fragment).toObject());
     }
@@ -45,18 +52,18 @@ class Fragment {
   }
 
   static async byId(ownerId, id) {
-    const fragment = await data.readFragment(ownerId, id);
+    const fragment = await readFragment(ownerId, id);
     return fragment ? new Fragment(fragment) : undefined;
   }
 
+  // (정적 delete는 data 레이어로 바로 위임만 해도 OK)
   static async delete(ownerId, id) {
-    await data.deleteFragment(ownerId, id);
-    await data.deleteFragmentData(ownerId, id);
+    return deleteFragment(ownerId, id);
   }
 
   async save() {
     this.updated = now();
-    await data.writeFragment(this.toObject());
+    await writeFragment(this.toObject());
   }
 
   async setData(buffer) {
@@ -65,12 +72,20 @@ class Fragment {
     }
     this.size = buffer.length;
     this.updated = now();
-    await data.writeFragment(this.toObject());
-    await data.writeFragmentData(this.ownerId, this.id, buffer);
+
+    // 실제 bytes 저장
+    await writeFragmentData(this.ownerId, this.id, buffer);
+    // 메타데이터 업데이트
+    await this.save();
   }
 
   async getData() {
-    return data.readFragmentData(this.ownerId, this.id);
+    return readFragmentData(this.ownerId, this.id);
+  }
+
+  // 인스턴스 delete: 라우트에서 fragment.delete() 쓰는 패턴에 사용
+  async delete() {
+    return deleteFragment(this.ownerId, this.id);
   }
 
   toObject() {

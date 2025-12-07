@@ -10,7 +10,13 @@ const {
   deleteFragment,
 } = require('./data');
 
-const SUPPORTED_TYPES = ['application/json'];
+const SUPPORTED_TYPES = [
+  'application/json',
+  'image/png',
+  'image/jpeg',
+  'image/jpg',
+  'image/webp',
+];
 
 const isSupportedType = (value) => {
   if (!value) {

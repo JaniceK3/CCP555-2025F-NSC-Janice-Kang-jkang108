@@ -20,7 +20,7 @@ describe('Fragment model', () => {
     });
 
     test('rejects unsupported media types', () => {
-      ['image/png', 'application/xml', 'application/octet-stream'].forEach((type) => {
+      ['application/xml', 'application/octet-stream'].forEach((type) => {
         expect(Fragment.isSupportedType(type)).toBe(false);
       });
     });

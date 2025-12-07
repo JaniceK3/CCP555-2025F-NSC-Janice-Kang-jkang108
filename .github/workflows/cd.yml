@@ -71,3 +71,43 @@ jobs:
             push: true
             # Use the git tag version and `latest`
             tags: ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPO }}:${{ env.VERSION_TAG }}, ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPO }}:latest
+
+        # Patch the task definition with your account-specific LabRole ARN
+        - name: Inject LabRole ARNs into task definition
+          env:
+            AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+          run: |
+            if [ -z "$AWS_ACCOUNT_ID" ]; then
+              echo "Missing AWS_ACCOUNT_ID secret"; exit 1;
+            fi
+            jq --arg account "$AWS_ACCOUNT_ID" \
+              '.executionRoleArn="arn:aws:iam::\($account):role/LabRole" |
+               .taskRoleArn="arn:aws:iam::\($account):role/LabRole"' \
+              fragments/fragments-definition.json > fragments/fragments-definition.patched.json
+
+        # Render the ECS task definition with the new image and env vars (no inline AWS creds)
+        - name: Fill in the new image ID in the Amazon ECS task definition
+          id: render-task-def
+          env:
+            ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+            ECR_REPO: fragments
+            VERSION_TAG: ${{ github.ref_name }}
+          uses: aws-actions/amazon-ecs-render-task-definition@v1
+          with:
+            task-definition: fragments/fragments-definition.patched.json
+            container-name: fragments
+            image: ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPO }}:${{ env.VERSION_TAG }}
+            environment-variables: |
+              LOG_LEVEL=info
+              NODE_ENV=production
+              AWS_REGION=us-east-1
+              AWS_S3_BUCKET_NAME=${{ vars.AWS_S3_BUCKET_NAME }}
+
+        # Deploy the rendered task definition to your ECS service
+        - name: Deploy Amazon ECS task definition
+          uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+          with:
+            task-definition: ${{ steps.render-task-def.outputs.task-definition }}
+            service: ${{ vars.ECS_SERVICE }}
+            cluster: ${{ vars.ECS_CLUSTER }}
+            wait-for-service-stability: true

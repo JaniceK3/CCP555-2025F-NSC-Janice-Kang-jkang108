@@ -1,6 +1,12 @@
 // src/app.js
 import { signIn, getUser, signOut } from './auth';
-import { createFragment, getApiBaseUrl, getUserFragments } from './api';
+import {
+  createFragment,
+  deleteFragment,
+  updateFragment,
+  getApiBaseUrl,
+  getUserFragments,
+} from './api';
 
 const selectors = {};
 let currentUser = null;
@@ -14,6 +20,7 @@ const mapSelectors = () => {
   selectors.fragmentsList = document.querySelector('#fragments-list');
   selectors.form = document.querySelector('#fragment-form');
   selectors.contentField = document.querySelector('#fragment-content');
+  selectors.fileField = document.querySelector('#fragment-file');
   selectors.typeField = document.querySelector('#fragment-type');
   selectors.feedback = document.querySelector('#feedback');
   selectors.locationInfo = document.querySelector('#location-info');
@@ -65,6 +72,68 @@ const renderFragments = (fragments, apiBaseUrl) => {
       htmlBtn.addEventListener('click', () => openFragment(fragment.id, 'html'));
       actions.appendChild(htmlBtn);
     }
+
+    if (fragment.type.startsWith('image/')) {
+      const jpegBtn = document.createElement('button');
+      jpegBtn.type = 'button';
+      jpegBtn.textContent = 'View JPEG';
+      jpegBtn.addEventListener('click', () => openFragment(fragment.id, 'jpg'));
+      actions.appendChild(jpegBtn);
+    }
+
+    if (fragment.type.startsWith('text/') || fragment.type === 'application/json') {
+      const editBtn = document.createElement('button');
+      editBtn.type = 'button';
+      editBtn.textContent = 'Edit';
+      editBtn.addEventListener('click', async () => {
+        if (!currentUser) return;
+        const currentContent = prompt('Enter new content for this fragment:');
+        if (currentContent === null) return;
+        const type = fragment.type;
+        let payload = currentContent;
+        if (type === 'application/json') {
+          try {
+            payload = JSON.stringify(JSON.parse(currentContent));
+          } catch (err) {
+            setFeedback(`Invalid JSON: ${err.message}`, 'error');
+            return;
+          }
+        }
+        editBtn.disabled = true;
+        setFeedback(`Updating fragment ${fragment.id}…`, 'info');
+        try {
+          await updateFragment(currentUser, fragment.id, payload, type);
+          const { fragments: updated } = await getUserFragments(currentUser);
+          renderFragments(updated, apiBaseUrl);
+          setFeedback(`Fragment ${fragment.id} updated.`, 'success');
+        } catch (err) {
+          setFeedback(`Unable to update fragment: ${err.message}`, 'error');
+        } finally {
+          editBtn.disabled = false;
+        }
+      });
+      actions.appendChild(editBtn);
+    }
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.type = 'button';
+    deleteBtn.textContent = 'Delete';
+    deleteBtn.addEventListener('click', async () => {
+      if (!currentUser) return;
+      deleteBtn.disabled = true;
+      setFeedback(`Deleting fragment ${fragment.id}…`, 'info');
+      try {
+        await deleteFragment(currentUser, fragment.id);
+        const { fragments: updated } = await getUserFragments(currentUser);
+        renderFragments(updated, apiBaseUrl);
+        setFeedback(`Fragment ${fragment.id} deleted.`, 'success');
+      } catch (err) {
+        setFeedback(`Unable to delete fragment: ${err.message}`, 'error');
+      } finally {
+        deleteBtn.disabled = false;
+      }
+    });
+    actions.appendChild(deleteBtn);
 
     item.appendChild(link);
     item.appendChild(meta);
@@ -124,14 +193,21 @@ const openFragment = async (fragmentId, extension = '') => {
       throw new Error(`${response.status} ${response.statusText}`);
     }
 
-    const body = await response.text();
+    const contentType = response.headers.get('Content-Type') || '';
+    const isImage = contentType.startsWith('image/');
+    const body = isImage ? await response.blob() : await response.text();
     const viewer = window.open('', '_blank');
-    if (extension === 'html') {
+    if (isImage) {
+      const url = URL.createObjectURL(body);
+      viewer.document.write(`<img src="${url}" alt="fragment image" />`);
+      viewer.document.close();
+    } else if (extension === 'html' || contentType.startsWith('text/html')) {
       viewer.document.write(body);
+      viewer.document.close();
     } else {
       viewer.document.write(`<pre style="white-space: pre-wrap">${body}</pre>`);
+      viewer.document.close();
     }
-    viewer.document.close();
   } catch (error) {
     setFeedback(`Unable to load fragment: ${error.message}`, 'error');
   }
@@ -149,6 +225,19 @@ async function init() {
   selectors.typeField?.addEventListener('change', (event) => {
     if (!selectors.contentField) return;
     const type = event.target.value;
+    const isImage = type.startsWith('image/');
+    // toggle inputs
+    if (selectors.contentField) {
+      selectors.contentField.disabled = isImage;
+      selectors.contentField.placeholder = isImage
+        ? 'Select an image file below'
+        : 'Type some text and submit to create a fragment';
+    }
+    if (selectors.fileField) {
+      selectors.fileField.disabled = !isImage;
+      if (!isImage) selectors.fileField.value = '';
+    }
+
     if (type === 'application/json') {
       selectors.contentField.placeholder = 'Enter valid JSON (e.g., {"hello":"world"})';
     } else if (type === 'text/markdown') {
@@ -180,20 +269,32 @@ async function init() {
     }
 
     const content = contentField.value.trim();
-    if (!content) {
-      setFeedback('Please enter some text before submitting.', 'warn');
-      return;
-    }
 
     const typeField = selectors.typeField;
     const type = typeField?.value || 'text/plain';
+    const isImage = type.startsWith('image/');
     let payload = content;
-    if (type === 'application/json') {
-      try {
-        payload = JSON.stringify(JSON.parse(content));
-      } catch (error) {
-        setFeedback(`Invalid JSON: ${error.message}`, 'error');
+
+    if (isImage) {
+      const fileInput = selectors.fileField;
+      const file = fileInput?.files?.[0];
+      if (!file) {
+        setFeedback('Please select an image file to upload.', 'warn');
         return;
+      }
+      payload = await file.arrayBuffer();
+    } else {
+      if (!content) {
+        setFeedback('Please enter some text before submitting.', 'warn');
+        return;
+      }
+      if (type === 'application/json') {
+        try {
+          payload = JSON.stringify(JSON.parse(content));
+        } catch (error) {
+          setFeedback(`Invalid JSON: ${error.message}`, 'error');
+          return;
+        }
       }
     }
 

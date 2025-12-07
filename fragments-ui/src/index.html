@@ -28,6 +28,9 @@
           <option value="text/plain">text/plain (default)</option>
           <option value="text/markdown">text/markdown</option>
           <option value="application/json">application/json</option>
+          <option value="image/png">image/png</option>
+          <option value="image/jpeg">image/jpeg</option>
+          <option value="image/webp">image/webp</option>
         </select>
         <label for="fragment-content">Fragment content</label>
         <textarea
@@ -37,6 +40,8 @@
           placeholder="Type some text and submit to create a fragment"
           required
         ></textarea>
+        <label for="fragment-file">Upload file (for images)</label>
+        <input id="fragment-file" name="fragment-file" type="file" accept="image/png,image/jpeg,image/webp" />
         <div>
           <button id="create-fragment" type="submit">Create Fragment</button>
         </div>

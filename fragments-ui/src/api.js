@@ -51,3 +51,30 @@ export async function createFragment(user, content, type = 'text/plain') {
     location: res.headers.get('Location'),
   };
 }
+
+/**
+ * Delete a fragment for the authenticated user.
+ */
+export async function deleteFragment(user, id) {
+  const fragmentsUrl = new URL(`/v1/fragments/${id}`, apiUrl);
+  await handleJsonResponse(
+    await fetch(fragmentsUrl, {
+      method: 'DELETE',
+      headers: user.authorizationHeaders(),
+    })
+  );
+}
+
+/**
+ * Update an existing fragment's data.
+ */
+export async function updateFragment(user, id, content, type = 'text/plain') {
+  const fragmentsUrl = new URL(`/v1/fragments/${id}`, apiUrl);
+  await handleJsonResponse(
+    await fetch(fragmentsUrl, {
+      method: 'PUT',
+      headers: user.authorizationHeaders(type),
+      body: content,
+    })
+  );
+}

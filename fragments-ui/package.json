@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "A simple web app using Node.js and Parcel that connects to AWS Cognito for authentication and provides a basic UI to test the Fragments microservice.",
   "scripts": {
-    "start": "parcel src/index.html --port 1234",
+    "start": "parcel src/index.html --port 8082",
     "build": "parcel build src/index.html",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint \"./src/**/*.js\""

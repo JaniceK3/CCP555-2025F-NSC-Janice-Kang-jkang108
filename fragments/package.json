@@ -4,9 +4,9 @@
   "version": "0.10.1",
   "description": "Fragments back-end API",
   "scripts": {
-    "test:watch": "jest -c jest.config.js --runInBand --watch --",
-    "test": "jest -c jest.config.js --runInBand --",
-    "coverage": "jest -c jest.config.js --runInBand --coverage",
+    "test:watch": "jest -c jest.config.js --runInBand --watch --forceExit --",
+    "test": "jest -c jest.config.js --runInBand --forceExit --",
+    "coverage": "jest -c jest.config.js --runInBand --coverage --forceExit",
     "lint": "eslint \"./src/**/*.js\" \"tests/**/*.js\"",
     "start": "node src/index.js",
     "dev": "node --env-file=debug.env --watch ./src/index.js",

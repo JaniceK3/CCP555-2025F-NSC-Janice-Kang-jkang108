@@ -1,15 +1,14 @@
 // src/model/data/aws/index.js
 
 const s3Client = require('./s3Client');
+const ddbDocClient = require('./ddbDocClient');
 const {
   PutObjectCommand,
   GetObjectCommand,
   DeleteObjectCommand,
 } = require('@aws-sdk/client-s3');
+const { PutCommand, GetCommand, QueryCommand, DeleteCommand } = require('@aws-sdk/lib-dynamodb');
 const logger = require('../../../logger');
-
-// XXX: temporary use of memory-db until we add DynamoDB
-const MemoryDB = require('../memory/memory-db');
 
 // Helper to convert stream to buffer
 const streamToBuffer = (stream) =>
@@ -21,8 +20,67 @@ const streamToBuffer = (stream) =>
   });
 
 /**
- * DATA FUNCTIONS – use S3 for the actual bytes
+ * DATA FUNCTIONS – DynamoDB for metadata, S3 for binary data
  */
+
+// Writes a fragment's metadata to DynamoDB
+function writeFragment(fragment) {
+  const params = {
+    TableName: process.env.AWS_DYNAMODB_TABLE_NAME,
+    Item: fragment,
+  };
+  const command = new PutCommand(params);
+
+  try {
+    return ddbDocClient.send(command);
+  } catch (err) {
+    logger.warn({ err, params, fragment }, 'error writing fragment to DynamoDB');
+    throw err;
+  }
+}
+
+// Reads a fragment's metadata from DynamoDB
+async function readFragment(ownerId, id) {
+  const params = {
+    TableName: process.env.AWS_DYNAMODB_TABLE_NAME,
+    Key: { ownerId, id },
+  };
+  const command = new GetCommand(params);
+
+  try {
+    const data = await ddbDocClient.send(command);
+    return data?.Item;
+  } catch (err) {
+    logger.warn({ err, params }, 'error reading fragment from DynamoDB');
+    throw err;
+  }
+}
+
+// Lists fragments for an owner
+async function listFragments(ownerId, expand = false) {
+  const params = {
+    TableName: process.env.AWS_DYNAMODB_TABLE_NAME,
+    KeyConditionExpression: 'ownerId = :ownerId',
+    ExpressionAttributeValues: {
+      ':ownerId': ownerId,
+    },
+  };
+
+  if (!expand) {
+    params.ProjectionExpression = 'id';
+  }
+
+  const command = new QueryCommand(params);
+
+  try {
+    const data = await ddbDocClient.send(command);
+    const items = data?.Items || [];
+    return !expand ? items.map((item) => item.id).filter(Boolean) : items;
+  } catch (err) {
+    logger.error({ err, params }, 'error getting all fragments for user from DynamoDB');
+    throw err;
+  }
+}
 
 // Write fragment data to S3
 async function writeFragmentData(ownerId, id, data) {
@@ -62,37 +120,47 @@ async function readFragmentData(ownerId, id) {
   }
 }
 
-// Delete fragment data from S3 and metadata from MemoryDB
+// Delete fragment metadata from DynamoDB and data from S3
 async function deleteFragment(ownerId, id) {
-  // 1) delete S3 object
-  const params = {
+  // delete S3 object
+  const deleteS3Params = {
     Bucket: process.env.AWS_S3_BUCKET_NAME,
     Key: `${ownerId}/${id}`,
   };
-
-  const command = new DeleteObjectCommand(params);
+  const deleteS3Command = new DeleteObjectCommand(deleteS3Params);
 
   try {
-    await s3Client.send(command);
+    await s3Client.send(deleteS3Command);
   } catch (err) {
-    const { Bucket, Key } = params;
+    const { Bucket, Key } = deleteS3Params;
     logger.error({ err, Bucket, Key }, 'Error deleting fragment data from S3');
     throw new Error('unable to delete fragment data');
   }
 
-  // 2) delete from MemoryDB (metadata + in-memory data map)
-  return MemoryDB.deleteFragment(ownerId, id);
+  // delete DynamoDB item
+  const deleteDdbParams = {
+    TableName: process.env.AWS_DYNAMODB_TABLE_NAME,
+    Key: { ownerId, id },
+  };
+  const deleteDdbCommand = new DeleteCommand(deleteDdbParams);
+
+  try {
+    await ddbDocClient.send(deleteDdbCommand);
+  } catch (err) {
+    logger.error({ err, deleteDdbParams }, 'Error deleting fragment metadata from DynamoDB');
+    throw new Error('unable to delete fragment metadata');
+  }
 }
 
 /**
  * Export the AWS data model:
- * - All metadata ops come from MemoryDB
- * - Only data ops (write/read/delete) use S3
+ * - Metadata ops use DynamoDB
+ * - Data ops use S3
  */
 module.exports = {
-  writeFragment: MemoryDB.writeFragment,
-  readFragment: MemoryDB.readFragment,
-  listFragments: MemoryDB.listFragments,
+  writeFragment,
+  readFragment,
+  listFragments,
   writeFragmentData,
   readFragmentData,
   deleteFragment,

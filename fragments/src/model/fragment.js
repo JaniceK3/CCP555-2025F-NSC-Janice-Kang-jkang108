@@ -44,11 +44,11 @@ class Fragment {
   }
 
   static async byUser(ownerId, expand = false) {
-    const fragments = await listFragments(ownerId);
+    const fragments = await listFragments(ownerId, expand);
     if (expand) {
       return fragments.map((fragment) => new Fragment(fragment).toObject());
     }
-    return fragments.map((fragment) => fragment.id);
+    return fragments.map((fragment) => (typeof fragment === 'string' ? fragment : fragment.id));
   }
 
   static async byId(ownerId, id) {

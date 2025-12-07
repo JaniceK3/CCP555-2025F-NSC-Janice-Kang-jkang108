@@ -22,7 +22,8 @@
         { "name": "NODE_ENV", "value": "production" },
         { "name": "LOG_LEVEL", "value": "info" },
         { "name": "AWS_REGION", "value": "us-east-1" },
-        { "name": "AWS_S3_BUCKET_NAME", "value": "jkang108-fragments" }
+        { "name": "AWS_S3_BUCKET_NAME", "value": "jkang108-fragments" },
+        { "name": "AWS_DYNAMODB_TABLE_NAME", "value": "fragments" }
       ],
       "logConfiguration": {
         "logDriver": "awslogs",
